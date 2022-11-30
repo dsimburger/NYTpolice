@@ -1,0 +1,83 @@
+---
+title: "INFO521 Final Project Proposal"
+author:
+- name: Dylan Simburger
+  affiliation: Dept. Of Sociology
+- name: Instructor - Cristian Roman-Palacios
+  affiliation: School of Information
+output: html_document
+---
+
+-----------------
+### Introduction
+Structural topic models (STMs) are machine learning models that use text and metadata about that text to look at the prevalence of words and phrases that hang together (i.e., topics). After a person specifies the number of topics they would like the STM to identify and a threshold value for the model to converge at, the STM will algorithmically identify clusters of words (topics) that hang together in text documents. For this project, I would like to do structural topic models of New York Times articles that cover incidents of police use of force or excessive force. Lawrence (2000) investigated this in a content analysis of articles from the New York and LA Times but only looked at about 400 articles with the main section of analyses only analyzing a subset of 50 articles. Their conclusions were that, over time, the media coverage of police use of force incidents became more critical and eventually helped to socially construct the meaning of police brutality and what police misconduct actually looks like. Police use of force is a hot-button issue in the United States as increased surveillance of law enforcement officers has magnified the potentially harmful actions they perform when interacting with the general population.
+
+Continuing Lawrence's (2000) line of research, I will download the full population of New York Times articles on police use of force incidents using the Nexis Uni database. From there, I will read these articles into R and transform the text into a corpus (data frame where the articles are rows and every word that appears in those articles is a column). I will also extract metadata (e.g., the publication date) from the articles so that I can look at how coverage of police use of force has changed over time. From there, I will perform structural topic models of the articles to see what words seem to be grouped together (i.e., topics) and how the prevalence of these topics have changed over time. 
+
+I will perform data analyses in R. I will read in articles from Nexis Uni using the [LexisNexisTools](https://cran.r-project.org/web/packages/LexisNexisTools/LexisNexisTools.pdf) R package. I will then transform these articles into a corpus ready for analysis using the [text mining (tm)](https://cran.r-project.org/web/packages/tm/vignettes/tm.pdf) package from R. Then, I will perform a structural topic model on these data using the [stm package](https://cran.r-project.org/web/packages/stm/vignettes/stmVignette.pdf) from R. After that, I will use [ggplot](https://cran.r-project.org/web/packages/ggplot2/index.html) and visualization techniques provided in the stm package to visualize how the prevalence of the identified topics has changed over time. 
+
+Here is a brief demonstration of structural topic modeling and the R code for it:
+
+### "Basic Topic Model of 100 NYT articles"
+
+
+### Packages Used
+```
+library(tm)
+library(stm)
+library(LexisNexisTools)
+```
+
+### Read Data into R from Downloaded Lexis Nexis File
+```
+articles <- lnt_read("C:/Users/dsimb/Downloads/Files (100).DOCX")
+```
+
+### Process the articles into a corpus (data frame with articles as rows and every word that appears in the articles as columns)
+```
+cleanarticles <- textProcessor(documents = articles@articles$Article, metadata = articles@meta)
+```
+
+### Prep these documents for topic modeling (otherwise the text won't encode properly and you'll just get numbers as words)
+```
+out <- prepDocuments(cleanarticles$documents, cleanarticles$vocab, cleanarticles$meta)
+```
+
+### Save the prepped documents outside of its original environment in case something goes wrong
+``` 
+docs <- out$documents
+vocab <- out$vocab
+meta <- out$meta
+```
+
+### Structural Topic Model of 100 NYT articles code. We are asking for 12 topics and for the model to stop iterating after 75 tries. We are also asking the model to structure the topics according to the meta variable 'Date'. "Spectral" specifies that we want to run a structural topic model (STM).
+``` 
+stm <- stm(documents = out$documents, 
+           vocab = out$vocab,
+           K = 12, 
+           prevalence =~Date, 
+           max.em.its = 75,
+           data = out$meta,
+           init.type = "Spectral", 
+           verbose = FALSE)
+```           
+### Basic plot of the 12 topics and the top 3 words in those topics.
+``` 
+plot(stm)
+```
+
+![](C:/Users/dsimb/Downloads/INFO521/police/topicmodel.png)
+
+### Rendering markdown file
+```
+library(rmarkdown)
+library(here)
+render(here("policescript.Rmd"), quiet = T)
+```
+
+
+
+
+### References
+[Lawrence, Regina G. 2000. "The Politics of Force: Media and the Construction of Police Brutality." Berkeley, CA: University of California Press](https://books.google.com/books/about/The_Politics_of_Force.html?id=m_v_TE13t9cC)
+
